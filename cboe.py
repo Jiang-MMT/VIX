@@ -121,7 +121,7 @@ def plot_data(f, period=None, kind=None, ohlc=False):
     ax.plot(dates, closes, 'w-', lw=2)
     ax.grid(True, color='w')
     plt.ylabel('Price')
-    ax.xaxis.set_major_locator(mticker.MaxNLocator(10))
+    ax.xaxis.set_major_locator(mticker.MaxNLocator(5))
     ax.xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m-%d'))
     ax.yaxis.label.set_color("w")
     ax.spines['bottom'].set_color("#5998ff")
@@ -169,7 +169,7 @@ def plot_data(f, period=None, kind=None, ohlc=False):
 
 def plot_all():
     for f in glob.glob('CFE*.csv'):
-        plot_data(f, period=10)
+        plot_data(f, period=5)
 
 if __name__ == '__main__':
     pull_data()
@@ -177,6 +177,6 @@ if __name__ == '__main__':
     print 'Processing data...'
     df = process_file()
     print 'Data finished processed!'
-    print 'plotting data'
+    print 'plotting data...'
     plot_all()
     print 'Finish plotting!'
