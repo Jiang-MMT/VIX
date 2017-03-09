@@ -34,9 +34,10 @@ def combine_data():
     os.chdir(cwd)
     os.system("/usr/local/bin/gsed -i '/^CFE data.*/d' CFE*.csv")
     os.system("/usr/local/bin/gsed -i 's/,\r*$//g' CFE*.csv")
-    os.system("/usr/local/bin/gsed -n 1p CFE_V04_VX.csv > cmb_file.csv")
-    os.system("/usr/local/bin/gsed '/^[A-Z].*/d' CFE*.csv >> cmb_file.csv")
-    os.system("/usr/local/bin/gsed -i 's/,\r*$//g' cmb_file.csv")
+    os.system("/usr/local/bin/awk 'BEGIN {OFS=FS=\",\"} {if (NR==1) {print \"Source\", $0} else { print FILENAME, $0}}' CFE_*.csv > temp.csv")
+    os.system("/usr/local/bin/awk '!/^CFE_*.*Interest[\t]*[\r]*$/' temp.csv > master.csv")
+    # os.system("/usr/local/bin/gsed '/^[A-Z].*/d' CFE*.csv >> master.csv")
+    # os.system("/usr/local/bin/gsed -i 's/,\r*$//g' master.csv")
 
 
 def find_third_wed(t_obj):
@@ -46,15 +47,18 @@ def find_third_wed(t_obj):
 
 
 def process_file():
-    f = 'cmb_file.csv'
+    f = 'master.csv'
     df = pd.read_csv(f)
-    df['Contract_Date'] = df.ix[:, 1].str.extract('^[A-Z] \((.*)\)', expand=False)
-    df['Contract_Date'] = pd.to_datetime(df['Contract_Date'], format='%b %y')
-    df['Contract_Date'] = df['Contract_Date'].apply(find_third_wed)
-    df['Days_To_Expire'] = (df['Contract_Date'] - pd.to_datetime(df.ix[:, 0])).dt.days
-    df = df.set_index(['Contract_Date', 'Trade Date'])
+    df['Days_to_expire'] = df.ix[:, 2].str.extract('^[A-Z] \((.*)\)', expand=False)
+    df['Days_to_expire'] = pd.to_datetime(df['Days_to_expire'], format='%b %y')
+    df['Days_to_expire'] = df['Days_to_expire'].apply(find_third_wed)
+    df['Year'] = df['Days_to_expire'].dt.year
+    df['Month'] = df['Days_to_expire'].dt.month
+    df['Day'] = df['Days_to_expire'].dt.day
+    df['Days_to_expire'] = (df['Days_to_expire'] - pd.to_datetime(df['Trade Date'])).dt.days
+    df = df.set_index(['Year', 'Month', 'Day', 'Trade Date'])
     df = df.sort_index()
-    df.to_csv('VX_all.csv')
+    df.to_csv('VX_Master.csv')
     return df
 
 
@@ -169,7 +173,7 @@ def plot_data(f, period=None, kind=None, ohlc=False):
 
 def plot_all():
     for f in glob.glob('CFE*.csv'):
-        plot_data(f, period=5)
+        plot_data(f)
 
 if __name__ == '__main__':
     pull_data()
@@ -177,6 +181,8 @@ if __name__ == '__main__':
     print 'Processing data...'
     df = process_file()
     print 'Data finished processed!'
-    print 'plotting data...'
-    plot_all()
-    print 'Finish plotting!'
+    r = raw_input('Do you want to plot data? \ny/n\n')
+    if r == 'y':
+        plot_all()
+        print 'plotting data...'
+    print 'All done!'
