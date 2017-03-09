@@ -41,23 +41,25 @@ def combine_data():
 
 
 def find_third_wed(t_obj):
-    while t_obj.weekday() != 2 or t_obj.day > 23 or t_obj.day < 15:
+    while t_obj.weekday() != 2 or t_obj.day > 23 or t_obj.day < 16:
         t_obj += timedelta(days=1)
     return t_obj
 
 
-def process_file():
+def proc_file():
     f = 'master.csv'
     df = pd.read_csv(f)
-    df['Days_to_expire'] = df.ix[:, 2].str.extract('^[A-Z] \((.*)\)', expand=False)
+    # df = df.dropna(subset=['Trade Date'], inplace=True)
+    df['Days_to_expire'] = df['Futures'].str.extract('^[A-Z] \((.*)\)', expand=False)
     df['Days_to_expire'] = pd.to_datetime(df['Days_to_expire'], format='%b %y')
+    df.dropna(subset=['Trade Date'], inplace=True)
     df['Days_to_expire'] = df['Days_to_expire'].apply(find_third_wed)
     df['Year'] = df['Days_to_expire'].dt.year
-    df['Month'] = df['Days_to_expire'].dt.month
+    df['Month'] =df['Days_to_expire'].dt.month
     df['Day'] = df['Days_to_expire'].dt.day
     df['Days_to_expire'] = (df['Days_to_expire'] - pd.to_datetime(df['Trade Date'])).dt.days
-    df = df.set_index(['Year', 'Month', 'Day', 'Trade Date'])
-    df = df.sort_index()
+    df.set_index(['Year', 'Month', 'Day', 'Days_to_expire'], inplace=True)
+    df.sortlevel(level=['Year', 'Month', 'Day', 'Days_to_expire'], ascending=[True, True, True, False], inplace=True)
     df.to_csv('VX_Master.csv')
     return df
 
@@ -179,7 +181,7 @@ if __name__ == '__main__':
     pull_data()
     combine_data()
     print 'Processing data...'
-    df = process_file()
+    df = proc_file()
     print 'Data finished processed!'
     r = raw_input('Do you want to plot data? \ny/n\n')
     if r == 'y':
