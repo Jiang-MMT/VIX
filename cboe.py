@@ -54,12 +54,17 @@ def proc_file():
     df['Days_to_expire'] = pd.to_datetime(df['Days_to_expire'], format='%b %y')
     df.dropna(subset=['Trade Date'], inplace=True)
     df['Days_to_expire'] = df['Days_to_expire'].apply(find_third_wed)
-    df['Year'] = df['Days_to_expire'].dt.year
-    df['Month'] =df['Days_to_expire'].dt.month
-    df['Day'] = df['Days_to_expire'].dt.day
+    df['Contract_Year'] = df['Days_to_expire'].dt.year
+    df['Contract_Month'] =df['Days_to_expire'].dt.month
+    df['Contract_Day'] = df['Days_to_expire'].dt.day
     df['Days_to_expire'] = (df['Days_to_expire'] - pd.to_datetime(df['Trade Date'])).dt.days
-    df.set_index(['Year', 'Month', 'Day', 'Days_to_expire'], inplace=True)
-    df.sortlevel(level=['Year', 'Month', 'Day', 'Days_to_expire'], ascending=[True, True, True, False], inplace=True)
+    df['Trade_Year'] = pd.to_datetime(df['Trade Date']).dt.year
+    df['Trade_Month'] = pd.to_datetime(df['Trade Date']).dt.month
+    df['Trade_Day'] = pd.to_datetime(df['Trade Date']).dt.day
+    df.set_index(['Contract_Year', 'Contract_Month', 'Contract_Day', 'Trade_Year', 'Trade_Month', 'Trade_Day'], inplace=True)
+    df.fillna(value=0, inplace=True)
+    df.sort_index(inplace=True)
+    # df.sortlevel(level=['Year', 'Month', 'Day', 'Days_to_expire'], ascending=[True, True, True, False], inplace=True)
     df.to_csv('VX_Master.csv')
     return df
 
@@ -103,7 +108,7 @@ def plot_ohlc(ax, dates, opens, highs, lows, closes):
     ohlc = zip(dates, opens, highs, lows, closes)
     candlestick_ohlc(ax, ohlc, width=.42, colorup='#53c156', colordown='#ff1717')
 
-    
+
 def plot_mva(ax, dates, closes, period, kind='simple'):
     ma = mva(closes, period, kind)
     ax.plot(dates, ma, color='yellow', label='MA%d'%period)
@@ -111,7 +116,7 @@ def plot_mva(ax, dates, closes, period, kind='simple'):
     leg = ax.legend(loc='best', shadow=True, fancybox=True, prop=props)
     leg.get_frame().set_alpha(0.5)
 
-    
+
 def plot_data(f, period=None, kind=None, ohlc=False):
     r = get_data(f)
     dates = date2num(r.trade_date)
@@ -139,7 +144,7 @@ def plot_data(f, period=None, kind=None, ohlc=False):
     ax.tick_params(axis='x', colors='w')
     plt.setp(ax.get_xticklabels(), visible=False)
     plt.suptitle('Contract %s'%f.split('.')[0], color='w')
-    
+
     # plot volume
     axv = plt.subplot2grid((4,4), (3,0), sharex=ax, rowspan=1, colspan=4, axisbg='#07000d')
     axv.bar(dates, volume)
