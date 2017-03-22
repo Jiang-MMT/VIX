@@ -62,7 +62,7 @@ def proc_file():
     df['Trade_Month'] = pd.to_datetime(df['Trade Date']).dt.month
     df['Trade_Day'] = pd.to_datetime(df['Trade Date']).dt.day
     df.set_index(['Contract_Year', 'Contract_Month', 'Contract_Day', 'Trade_Year', 'Trade_Month', 'Trade_Day'], inplace=True)
-    df.fillna(value=0, inplace=True)
+    df.fillna(value=-999, inplace=True)
     df.sort_index(inplace=True)
     # df.sortlevel(level=['Year', 'Month', 'Day', 'Days_to_expire'], ascending=[True, True, True, False], inplace=True)
     df.to_csv('VX_Master.csv')
